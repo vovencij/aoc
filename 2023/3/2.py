@@ -1,0 +1,85 @@
+# https://adventofcode.com/2023/day/3#part2
+
+def read_matrix():
+    file = open("input.txt")
+    file_lines = file.read().splitlines()
+
+    line_of_dots = "." * len(file_lines[0])
+    res = [line_of_dots]
+    res.extend(file_lines)
+    res.append(line_of_dots)
+
+    return res
+
+
+def add_char(chars_around, stars_around_me, all_lines, row, col):
+    ch = all_lines[row][col]
+    chars_around.add(ch)
+
+    if ch == "*":
+        stars_around_me.add((row, col))
+
+
+lines = read_matrix()
+width = len(lines[0])
+digitsFound = 0
+numbersFound = 0
+sumOfAllNumbers = 0
+starTracker = {}
+for curLine in range(1, len(lines) - 1):
+    curCol = 0
+    ongoingNumber = ""
+    charsAround = set()
+    numberDone = False
+    starsAroundMe = set()
+
+    while curCol < width:
+        curSymbol = lines[curLine][curCol]
+        if curSymbol.isdigit():
+            digitsFound += 1
+            if ongoingNumber == "" and curCol > 0:
+                add_char(charsAround, starsAroundMe, lines, curLine-1, curCol-1)
+                add_char(charsAround, starsAroundMe, lines, curLine, curCol-1)
+                add_char(charsAround, starsAroundMe, lines, curLine+1, curCol-1)
+            ongoingNumber += curSymbol
+            add_char(charsAround, starsAroundMe, lines, curLine-1, curCol)
+            add_char(charsAround, starsAroundMe, lines, curLine+1, curCol)
+            if curCol == width - 1:
+                numberDone = True
+        else:
+            if ongoingNumber != "":
+                if curCol < width - 1:
+                    add_char(charsAround, starsAroundMe, lines, curLine-1, curCol)
+                    add_char(charsAround, starsAroundMe, lines, curLine, curCol)
+                    add_char(charsAround, starsAroundMe, lines, curLine+1, curCol)
+                numberDone = True
+
+        if numberDone:
+            if len(charsAround) == 1:
+                print(f"{curLine}: Only one char around {ongoingNumber}: {charsAround}, skipping")
+            else:
+                print(f"{curLine}: {ongoingNumber}")
+                numbersFound += 1
+                sumOfAllNumbers += int(ongoingNumber)
+                for cog in starsAroundMe:
+                    starTracker.setdefault(cog, set()).add(ongoingNumber)
+
+            ongoingNumber = ""
+            charsAround = set()
+            starsAroundMe = set()
+            numberDone = False
+
+        curCol += 1
+
+print(f"digits: {digitsFound}, numbers: {numbersFound}, sum of all numbers: {sumOfAllNumbers}")
+
+ratioSum = 0
+for gear in starTracker.values():
+    if len(gear) == 2:
+        ratio = int(gear.pop()) * int(gear.pop())
+        print(f"Good gear ratio: {ratio}")
+        ratioSum += ratio
+    else:
+        print(f"Bad gear: {gear}")
+
+print(f"Sum of all gear ratios: {ratioSum}")
